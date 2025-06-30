@@ -1,0 +1,19 @@
+# Python __pycache__ files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+
+# macOS system files
+.DS_Store
+
+# SQLite database files (for switch from CSV)
+*.db
+*.sqlite3
+
+# VS Code settings (keeping local editor config out)
+.vscode/
+
+# Jupyter Notebook checkpoints (if experimenting in notebooks)
+.ipynb_checkpoints/
