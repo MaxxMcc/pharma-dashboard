@@ -46,13 +46,14 @@ def test_generateProcessSnapshot_keys_and_types():
     assert isinstance(snapshot, dict)
     expected_keys = {
         "Timestamp", "BatchID", "DissolvedOxygen",
-        "Temperature", "pH", "AlarmTriggered", "AlarmType"
+        "Temperature", "pH", "Yield", "AlarmTriggered", "AlarmType"
     }
     assert set(snapshot.keys()) == expected_keys
     assert isinstance(snapshot["BatchID"], int)
     assert isinstance(snapshot["DissolvedOxygen"], float)
     assert isinstance(snapshot["Temperature"], float)
     assert isinstance(snapshot["pH"], float)
+    assert isinstance(snapshot["Yield"], float)
     assert isinstance(snapshot["AlarmTriggered"], int)
     assert isinstance(snapshot["AlarmType"], str)
 
@@ -64,12 +65,16 @@ def test_snapshotToDict_structure():
         do=50.0,
         temp=37.0,
         ph=7.0,
+        productYield=4.0, 
         alarmsTriggered=True,
         alarmType="HighTemp"
     )
     assert d["Timestamp"] == "2025-01-01 12:00:00"
     assert d["BatchID"] == 1
     assert d["DissolvedOxygen"] == 50.0
+    assert d["Temperature"] == 37.0
+    assert d["pH"] == 7.0
+    assert d["Yield"] == 4.0
     assert d["AlarmTriggered"] == 1
     assert d["AlarmType"] == "HighTemp"
 
@@ -81,6 +86,7 @@ def test_appendSnapshot_creates_file(filePath = DATA_FILE_PATH):
         do=50.0,
         temp=37.0,
         ph=7.0,
+        productYield=4.0,
         alarmsTriggered=True,
         alarmType="HighTemp"
     )
@@ -90,7 +96,7 @@ def test_appendSnapshot_creates_file(filePath = DATA_FILE_PATH):
     df = pd.read_csv(filePath)
     assert set(df.columns) == {
         "Timestamp", "BatchID", "DissolvedOxygen",
-        "Temperature", "pH", "AlarmTriggered", "AlarmType(s)"
+        "Temperature", "pH", "Yield", "AlarmTriggered", "AlarmType(s)"
     }
     assert df.shape[0] == 1
     assert df.iloc[0]["BatchID"] == 1

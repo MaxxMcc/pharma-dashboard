@@ -1,2 +1,2 @@
-Timestamp,BatchID,DissolvedOxygen,Temperature,pH,AlarmTriggered,AlarmType(s)
-2025-01-01 12:00:00,1,50.0,37.0,7.0,1,HighTemp
+Timestamp,BatchID,DissolvedOxygen,Temperature,pH,Yield,AlarmTriggered,AlarmType(s)
+2025-01-01 12:00:00,1,50.0,37.0,7.0,4.0,1,HighTemp

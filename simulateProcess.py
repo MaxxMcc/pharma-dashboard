@@ -33,23 +33,26 @@ def runSimulatorLoop(batchCount: int = 100):
         snapshot = generateProcessSnapshot(count+1)
         appendSnapshot(snapshot)
         time.sleep(SIMULATION_INTERVAL_SEC)
-    print(f"Simulating process... {snapshot}")
+
+def simulateOneEntry():
+    pass
 
 def initializeCSV(filePath: str = DATA_FILE_PATH):
     """Ensure /data exists, then wipe CSV and write header row."""
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
     with open(filePath, mode="w") as f:
-        f.write("Timestamp,BatchID,DissolvedOxygen,Temperature,pH,AlarmTriggered,AlarmType(s)\n")
+        f.write("Timestamp,BatchID,DissolvedOxygen,Temperature,pH,Yield,AlarmTriggered,AlarmType(s)\n")
 
 
 def generateProcessSnapshot(batchID: int) -> dict:
     """Generate a single process snapshot with timestamp and variable values."""
     Timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    DissolvedOxygen = random.uniform(18, 55) #(%)
-    Temperature = random.uniform(35, 42)    #(°C)
-    pH = random.uniform(6.0, 8.0)
+    DissolvedOxygen = random.uniform(18, 52) #(%)
+    Temperature = random.uniform(30, 42)    #(°C)
+    pH = random.uniform(6.4, 7.6)
     AlarmTriggered, AlarmType = evaluateAlarms(DissolvedOxygen, Temperature, pH)
-    return snapshotToDict(Timestamp, batchID, DissolvedOxygen, Temperature, pH, AlarmTriggered, AlarmType)
+    Yield = getYield(AlarmTriggered, AlarmType)
+    return snapshotToDict(Timestamp, batchID, DissolvedOxygen, Temperature, pH, Yield, AlarmTriggered, AlarmType)
 
 
 def evaluateAlarms(do: float, temp: float, ph: float) -> tuple[bool, str]:
@@ -74,15 +77,23 @@ def evaluateAlarms(do: float, temp: float, ph: float) -> tuple[bool, str]:
 
     return alarm_triggered, alarm_types
 
+def getYield(alarmsTriggered: bool, alarmType: str) -> float:
+    """Calculate yield based on alarm condition penelty."""
+    baseYield = random.uniform(3.6, 3.8)  # (g)
+    alarmCount = alarmType.count(",") + 1 if alarmType else 0
+    penalty = random.uniform(1, 2) * alarmCount 
+    return max(baseYield - penalty, 0.0)
 
-def snapshotToDict(time: str, batchID: int, do: float, temp: float, ph: float, alarmsTriggered: bool, alarmType: str) -> dict:
+
+def snapshotToDict(time: str, batchID: int, do: float, temp: float, ph: float, productYield: float, alarmsTriggered: bool, alarmType: str) -> dict:
     """Convert multiple values to a dictionary"""
     snapshot = {
         "Timestamp": time,
         "BatchID": batchID,
-        "DissolvedOxygen": round(do, 2),
-        "Temperature": round(temp, 2),
+        "DissolvedOxygen": round(do, 1),
+        "Temperature": round(temp, 1),
         "pH": round(ph, 2),
+        "Yield": round(productYield, 2),
         "AlarmTriggered": int(alarmsTriggered),
         "AlarmType": alarmType
     }
