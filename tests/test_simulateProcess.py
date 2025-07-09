@@ -1,11 +1,14 @@
 import pytest
 import pandas as pd
+import os
 from simulateProcess import (
     evaluateAlarms,
     generateProcessSnapshot,
     snapshotToDict,
     appendSnapshot,
-    initializeCSV
+    initializeCSV,
+    getNextBatchID,
+    runSimulatorLoop
 )
 
 # -------------------------------------
@@ -14,6 +17,10 @@ from simulateProcess import (
 
 DATA_FILE_PATH = "tests/test_data.csv"
 
+
+# -------------------------------------
+# Core Testing
+# -------------------------------------
 
 def test_evaluateAlarms_no_alarms():
     alarmsTriggered, alarmType = evaluateAlarms(do=30.0, temp=37.0, ph=7.0)
@@ -90,7 +97,7 @@ def test_appendSnapshot_creates_file(filePath = DATA_FILE_PATH):
         alarmsTriggered=True,
         alarmType="HighTemp"
     )
-    initializeCSV(filePath)
+    initializeCSV(True, filePath)
     appendSnapshot(snapshot, filePath)
 
     df = pd.read_csv(filePath)
@@ -101,3 +108,61 @@ def test_appendSnapshot_creates_file(filePath = DATA_FILE_PATH):
     assert df.shape[0] == 1
     assert df.iloc[0]["BatchID"] == 1
     assert df.iloc[0]["AlarmType(s)"] == "HighTemp"
+
+
+# -------------------------------------
+# Testing after the simulate single batch function included
+# -------------------------------------
+
+def test_initializeCSV_wipe_true():
+    initializeCSV(True, filePath=DATA_FILE_PATH)
+    assert os.path.exists(DATA_FILE_PATH)
+    with open(DATA_FILE_PATH) as f:
+        content = f.read()
+    assert "Timestamp,BatchID" in content
+
+def test_initializeCSV_wipe_false_new_file():
+    # Remove it first if it exists
+    if os.path.exists(DATA_FILE_PATH):
+        os.remove(DATA_FILE_PATH)
+    initializeCSV(False, filePath=DATA_FILE_PATH)
+    assert os.path.exists(DATA_FILE_PATH)
+    with open(DATA_FILE_PATH) as f:
+        content = f.read()
+    assert "Timestamp,BatchID" in content
+
+def test_initializeCSV_wipe_false_existing_file():
+    with open(DATA_FILE_PATH, "w") as f:
+        f.write("keep me")
+    initializeCSV(False, filePath=DATA_FILE_PATH)
+    with open(DATA_FILE_PATH) as f:
+        content = f.read()
+    assert "keep me" in content
+
+def test_getNextBatchID_existing():
+    df = pd.DataFrame({"BatchID": [1, 2, 3]})
+    df.to_csv(DATA_FILE_PATH, index=False)
+    assert getNextBatchID(DATA_FILE_PATH) == 4
+
+def test_getNextBatchID_empty():
+    with open(DATA_FILE_PATH, "w") as f:
+        f.write("")
+    assert getNextBatchID(DATA_FILE_PATH) == 1
+
+def test_getNextBatchID_missing():
+    if os.path.exists(DATA_FILE_PATH):
+        os.remove(DATA_FILE_PATH)
+    assert getNextBatchID(DATA_FILE_PATH) == 1
+
+def test_runSimulatorLoop_wipe_true():
+    runSimulatorLoop(3, True, DATA_FILE_PATH)
+    df = pd.read_csv(DATA_FILE_PATH)
+    assert df.shape[0] == 3
+    assert df.iloc[0]['BatchID'] == 1
+
+def test_runSimulatorLoop_wipe_false():
+    runSimulatorLoop(1, True, DATA_FILE_PATH)
+    runSimulatorLoop(2, False, DATA_FILE_PATH)
+    df = pd.read_csv(DATA_FILE_PATH)
+    assert df.shape[0] == 3
+    assert df.iloc[-1]['BatchID'] == 3

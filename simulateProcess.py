@@ -23,26 +23,45 @@ PH_HIGH_THRESHOLD = 7.5
 # Core Functions
 # -------------------------------------
 
-def runSimulatorLoop(batchCount: int = 100):
+def runSimulatorLoop(batchCount: int = 100, wipeCSV: bool = True, filePath: str = DATA_FILE_PATH):
     """
     - Generate fake timestamp, process variables, alarm conditions
-    - Append row to data/batch_data.csv
+    - If wipeCSV is True, clear file and start BatchID at 1.
+    - Else, append to existing CSV, find latest BatchID, continue.
     """
-    initializeCSV()
-    for count in range(batchCount):
-        snapshot = generateProcessSnapshot(count+1)
-        appendSnapshot(snapshot)
+    initializeCSV(wipeCSV, filePath)
+    batchID = getNextBatchID(filePath)
+    for i in range(max(0,batchCount)):
+        snapshot = generateProcessSnapshot(batchID)
+        appendSnapshot(snapshot, filePath)
+        batchID += 1
+        print(f"Simulating process... {snapshot}")
         time.sleep(SIMULATION_INTERVAL_SEC)
 
-def simulateOneEntry():
-    pass
 
-def initializeCSV(filePath: str = DATA_FILE_PATH):
-    """Ensure /data exists, then wipe CSV and write header row."""
+def initializeCSV(wipeCSV: bool, filePath: str = DATA_FILE_PATH):
+    """
+    - If wipeCSV is True or /data does not exist, wipe the file and write header.
+    """
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
-    with open(filePath, mode="w") as f:
-        f.write("Timestamp,BatchID,DissolvedOxygen,Temperature,pH,Yield,AlarmTriggered,AlarmType(s)\n")
+    if wipeCSV or not os.path.exists(filePath):
+        with open(filePath, mode="w") as f:
+            f.write("Timestamp,BatchID,DissolvedOxygen,Temperature,pH,Yield,AlarmTriggered,AlarmType(s)\n")
 
+def getNextBatchID(filePath: str = DATA_FILE_PATH) -> int:
+    """
+    Get the next BatchID based on the existing data.
+    If file does not exist or is empty, return 1.
+    """
+    try:
+        df = pd.read_csv(filePath)
+        if not df.empty and 'BatchID' in df.columns:
+            return df['BatchID'].iloc[-1] + 1
+    except (FileNotFoundError, pd.errors.EmptyDataError, KeyError, IndexError):
+        pass
+    return 1
+
+    
 
 def generateProcessSnapshot(batchID: int) -> dict:
     """Generate a single process snapshot with timestamp and variable values."""
@@ -51,7 +70,7 @@ def generateProcessSnapshot(batchID: int) -> dict:
     Temperature = random.uniform(30, 42)    #(°C)
     pH = random.uniform(6.4, 7.6)
     AlarmTriggered, AlarmType = evaluateAlarms(DissolvedOxygen, Temperature, pH)
-    Yield = getYield(AlarmTriggered, AlarmType)
+    Yield = getYield(AlarmTriggered, AlarmType) #(g)
     return snapshotToDict(Timestamp, batchID, DissolvedOxygen, Temperature, pH, Yield, AlarmTriggered, AlarmType)
 
 
@@ -100,11 +119,11 @@ def snapshotToDict(time: str, batchID: int, do: float, temp: float, ph: float, p
     return snapshot
 
 
-def appendSnapshot(snapshot: dict, file_path: str = DATA_FILE_PATH):
+def appendSnapshot(snapshot: dict, filePath: str = DATA_FILE_PATH):
     """Append a new snapshot to the CSV file."""
     try:
         df = pd.DataFrame([snapshot])
-        df.to_csv(file_path, mode="a", header=False, index=False)
+        df.to_csv(filePath, mode="a", header=False, index=False)
     except Exception as e:
         print(f"[ERROR] Failed to append snapshot: {e}")
 
