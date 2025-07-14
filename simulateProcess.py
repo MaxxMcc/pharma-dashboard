@@ -26,7 +26,7 @@ BATCH_INTERVAL_HOURS = 24
 # Core Functions
 # -------------------------------------
 
-def runSimulatorLoop(batchCount: int = 100, wipeCSV: bool = True, filePath: str = DATA_FILE_PATH):
+def runSimulatorLoop(batchCount: int = 60, wipeCSV: bool = True, filePath: str = DATA_FILE_PATH):
     """
     - Generate fake timestamp, process variables, alarm conditions
     - If wipeCSV is True, clear file and start BatchID at 1.
