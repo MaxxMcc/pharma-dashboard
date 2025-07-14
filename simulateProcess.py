@@ -11,13 +11,16 @@ import os
 # -------------------------------------
 
 DATA_FILE_PATH = "data/batch_data.csv"
-SIMULATION_INTERVAL_SEC = 1
 
 DO_HIGH_THRESHOLD = 50.0
 DO_LOW_THRESHOLD = 20.0
 TEMP_HIGH_THRESHOLD = 40.0
 PH_LOW_THRESHOLD = 6.5
 PH_HIGH_THRESHOLD = 7.5
+
+# Simulated start date: exactly 1 year ago, new batch each 24 hours
+SIMULATION_START_DATE = datetime.datetime.now() - datetime.timedelta(days=365)
+BATCH_INTERVAL_HOURS = 24
 
 # -------------------------------------
 # Core Functions
@@ -30,13 +33,11 @@ def runSimulatorLoop(batchCount: int = 100, wipeCSV: bool = True, filePath: str 
     - Else, append to existing CSV, find latest BatchID, continue.
     """
     initializeCSV(wipeCSV, filePath)
-    batchID = getNextBatchID(filePath)
     for i in range(max(0,batchCount)):
-        snapshot = generateProcessSnapshot(batchID)
+        batchID = getNextBatchID(filePath)
+        timeStamp = getNextTimeStamp(filePath)
+        snapshot = generateProcessSnapshot(batchID, timeStamp)
         appendSnapshot(snapshot, filePath)
-        batchID += 1
-        print(f"Simulating process... {snapshot}")
-        time.sleep(SIMULATION_INTERVAL_SEC)
 
 
 def initializeCSV(wipeCSV: bool, filePath: str = DATA_FILE_PATH):
@@ -61,17 +62,28 @@ def getNextBatchID(filePath: str = DATA_FILE_PATH) -> int:
         pass
     return 1
 
-    
+def getNextTimeStamp(filePath: str = DATA_FILE_PATH) -> int:
+    """
+    Get the timestamp based on the existing data.
+    If file does not exist or is empty, return simulation start time.
+    """
+    try:
+        df = pd.read_csv(filePath)
+        if not df.empty and 'Timestamp' in df.columns:
+            lastBatchTime = pd.to_datetime(df['Timestamp'].iloc[-1])
+            return (lastBatchTime + datetime.timedelta(hours=BATCH_INTERVAL_HOURS)).strftime('%Y-%m-%d %H:%M:%S')
+    except (FileNotFoundError, pd.errors.EmptyDataError, KeyError, IndexError):
+        pass
+    return SIMULATION_START_DATE.strftime('%Y-%m-%d %H:%M:%S')
 
-def generateProcessSnapshot(batchID: int) -> dict:
+def generateProcessSnapshot(batchID: int, timeStamp: str) -> dict:
     """Generate a single process snapshot with timestamp and variable values."""
-    Timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     DissolvedOxygen = random.uniform(18, 52) #(%)
     Temperature = random.uniform(30, 42)    #(°C)
     pH = random.uniform(6.4, 7.6)
     AlarmTriggered, AlarmType = evaluateAlarms(DissolvedOxygen, Temperature, pH)
     Yield = getYield(AlarmTriggered, AlarmType) #(g)
-    return snapshotToDict(Timestamp, batchID, DissolvedOxygen, Temperature, pH, Yield, AlarmTriggered, AlarmType)
+    return snapshotToDict(timeStamp, batchID, DissolvedOxygen, Temperature, pH, Yield, AlarmTriggered, AlarmType)
 
 
 def evaluateAlarms(do: float, temp: float, ph: float) -> tuple[bool, str]:
@@ -97,7 +109,8 @@ def evaluateAlarms(do: float, temp: float, ph: float) -> tuple[bool, str]:
     return alarm_triggered, alarm_types
 
 def getYield(alarmsTriggered: bool, alarmType: str) -> float:
-    """Calculate yield based on alarm condition penelty."""
+    """Calculate yield based on alarm condition penalty."""
+
     baseYield = random.uniform(3.6, 3.8)  # (g)
     alarmCount = alarmType.count(",") + 1 if alarmType else 0
     penalty = random.uniform(1, 2) * alarmCount 
@@ -125,7 +138,8 @@ def appendSnapshot(snapshot: dict, filePath: str = DATA_FILE_PATH):
         df = pd.DataFrame([snapshot])
         df.to_csv(filePath, mode="a", header=False, index=False)
     except Exception as e:
-        print(f"[ERROR] Failed to append snapshot: {e}")
+        #print(f"[ERROR] Failed to append snapshot: {e}")
+        pass
 
 
 if __name__ == "__main__":

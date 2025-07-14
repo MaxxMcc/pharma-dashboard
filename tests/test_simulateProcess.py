@@ -49,7 +49,7 @@ def test_evaluateAlarms_multiple_alarms():
 
 
 def test_generateProcessSnapshot_keys_and_types():
-    snapshot = generateProcessSnapshot(batchID=1)
+    snapshot = generateProcessSnapshot(batchID=1, timeStamp="2025-01-01 12:00:00")
     assert isinstance(snapshot, dict)
     expected_keys = {
         "Timestamp", "BatchID", "DissolvedOxygen",
