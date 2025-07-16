@@ -1,0 +1,101 @@
+/* Table of contents
+––––––––––––––––––––––––––––––––––––––––––––––––––
+- section
+- kpi-wrapper
+- kpi-card
+*/
+
+
+
+/* Section
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.section {
+    margin-top: 40px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Section Title 
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.section-title {
+    font-size: 1.8rem;
+    margin-top: 40px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 5px;
+    color: #333;
+}
+
+/* KPI Wrapper
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.kpi-wrapper {
+    display: flex;
+    gap: 40px;
+    margin-top: 20px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+/* KPI Card
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.kpi-card {
+    background-color: #f8f8f8;
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    text-align: center;
+    flex: 1;
+}
+
+
+
+/* KPI Label
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.kpi-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+/* KPI Value
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.kpi-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #111;
+}
+
+/* Alarm Pie
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+#alarm-pie {
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    padding: 10px;
+    background-color: #fff;
+}
+
+/* Alarm Row
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.alarm-row {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+/* Alarm Section
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.alarm-section-left {
+    flex: 1;
+    min-width: 300px;
+}
+
+/* Alarm Section Right
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.alarm-section-right {
+    flex: 2;
+    min-width: 500px;
+}

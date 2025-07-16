@@ -15,16 +15,16 @@ from simulateProcess import runSimulatorLoop
 # -------------------------------------
 
 DATA_FILE_PATH = "data/batch_data.csv"
+PIE_COLORS = ['#ff7f0e', '#1f77b4', '#2ca02c']  # Orange, Blue, Green
 
 
 # -------------------------------------
 # Core App
 # -------------------------------------
-
 app = dash.Dash(__name__)
 
-
 app.layout = html.Div([
+
     html.H1("Pharma Process Dashboard"),
     html.P("Simulated batch process with real-time trends."),
     html.Button(
@@ -35,9 +35,14 @@ app.layout = html.Div([
     dcc.Store(id="last-click-store", data=0),
     html.Div(id="kpi-cards"),
     dcc.Graph(id='yield-chart'),
-    html.H3("Alarm Events"),
     html.Div([
-        dcc.Graph(id='alarm-pie', style={'flex': '0.35', 'padding': '0 20px'}),
+        html.H2("Alarm Events", className="section-title")
+    ]),
+
+    html.Div([
+        html.Div([
+            dcc.Graph(id='alarm-pie', style={'width': '100%'})
+        ], className='alarm-section-left'),
 
         html.Div([
             dash_table.DataTable(
@@ -47,12 +52,13 @@ app.layout = html.Div([
                 style_cell={'textAlign': 'center', 'padding': '5px'},
                 style_header={'backgroundColor': 'lightgrey', 'fontWeight': 'bold'}
             )
-        ], style={'flex': '0.6'})
-    ], style={'display': 'flex', 'flex-direction': 'row'})    
+        ], className='alarm-section-right')
+    ], className="alarm-row"),
+
+    html.Footer("Last updated: 16 July 2025 • Built by Maxwell McClelland", style={
+    'textAlign': 'center', 'marginTop': '50px', 'color': '#999'
+})
 ])
-
-
-
 
 @app.callback(
     Output("simulate-button", "children"),
@@ -81,11 +87,25 @@ def simulate_and_update(n_clicks, last_click_stored):
     totalAlarms = df['AlarmTriggered'].sum() if not df.empty else 0
     avgYield = round(df['Yield'].mean(), 2) if not df.empty else 0
 
+    
     kpiCards = html.Div([
-        html.H4(f"Total Batches: {totalSnapshots}"),
-        html.H4(f"Total Alarms: {totalAlarms}"),
-        html.H4(f"Average Yield: {avgYield} g") 
-    ])
+        html.Div([
+            html.Div("Total Batches", className="kpi-label"),
+            html.Div(f"{totalSnapshots}", className="kpi-value")
+        ], className="kpi-card"),
+
+        html.Div([
+            html.Div("Total Alarms", className="kpi-label"),
+            html.Div(f"{totalAlarms}", className="kpi-value")
+        ], className="kpi-card"),
+
+        html.Div([
+            html.Div("Average Yield", className="kpi-label"),
+            html.Div(f"{avgYield} g", className="kpi-value")
+        ], className="kpi-card"),
+    ], className="kpi-wrapper")
+
+
 
 
     # Alarms Table 
@@ -124,7 +144,20 @@ def simulate_and_update(n_clicks, last_click_stored):
             alarmPie = px.pie(
                 names=list(alarm_counts.keys()),
                 values=list(alarm_counts.values()),
-                title="Alarm Breakdown"
+                title="Alarm Breakdown",
+                hole=0.4
+            )
+            alarmPie.update_traces(
+                textinfo='label+percent+value',
+                textposition='inside',
+                insidetextorientation='radial',
+                pull=[0.025]*len(alarm_counts),
+                marker=dict(colors=PIE_COLORS)
+            )
+            alarmPie.update_layout(
+                showlegend=True,
+                margin=dict(t=40, l=10, r=10, b=10),
+                height=300
             )
         else:
             alarmPie = {}
@@ -154,16 +187,18 @@ def simulate_and_update(n_clicks, last_click_stored):
             y=df['7DayAvg'],
             name='7-Day Average',
             mode='lines',
-            line=dict(color='firebrick', width=2)
+            line=dict(color='#154360', width=2)
         ))
-
         fig.update_layout(
             title='Yield [g] Per Batch with 7-Day Average',
             barmode='overlay',
             xaxis_title='Date',
             yaxis_title='Yield (g)',
             legend=dict(x=0.01, y=0.99),
-            template='plotly_white'
+            template='plotly_white',
+            plot_bgcolor='white',
+            xaxis=dict(showgrid=True, gridcolor='lightgrey'),
+            yaxis=dict(showgrid=True, gridcolor='lightgrey'),
         )
         yieldChart = fig
     else:
